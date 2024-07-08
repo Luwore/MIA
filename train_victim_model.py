@@ -81,60 +81,6 @@ def get_data_indices(data_size, target_train_size=10000, n_shadow=10):
     return target_data_indices, shadow_data_indices
 
 
-def save_data(args):
-    print('-' * 10 + 'SAVING DATA TO DISK' + '-' * 10 + '\n')
-
-    x = train_dataset.data
-    y = np.array(train_dataset.targets)
-    test_x = test_dataset.data
-    test_y = np.array(test_dataset.targets)
-
-    if test_x is None or len(test_x) == 0:
-        print('Splitting train/test data with ratio {}/{}'.format(1 - args.test_ratio, args.test_ratio))
-        x, test_x, y, test_y = train_test_split(x, y, test_size=args.test_ratio, stratify=y)
-
-    assert len(x) > 2 * args.target_data_size
-
-    target_data_indices, shadow_indices = get_data_indices(len(x), target_train_size=args.target_data_size,
-                                                           n_shadow=args.n_shadow)
-    np.savez(MODEL_PATH + 'data_indices.npz', target_data_indices, shadow_indices)
-
-    print('Saving data for target model')
-    train_x, train_y = x[target_data_indices], y[target_data_indices]
-    size = len(target_data_indices)
-    if size < len(test_x):
-        test_x = test_x[:size]
-        test_y = test_y[:size]
-    np.savez(DATA_PATH + 'target_data.npz', train_x, train_y, test_x, test_y)
-    print(f'Target data saved to {DATA_PATH}target_data.npz')
-
-    target_size = len(target_data_indices)
-    shadow_x, shadow_y = x[shadow_indices], y[shadow_indices]
-    shadow_indices = np.arange(len(shadow_indices))
-
-    for i in range(args.n_shadow):
-        print('Saving data for shadow model {}'.format(i))
-        sample_size = min(2 * target_size, len(shadow_indices))
-        shadow_i_indices = np.random.choice(shadow_indices, sample_size, replace=False)
-        shadow_i_x, shadow_i_y = shadow_x[shadow_i_indices], shadow_y[shadow_i_indices]
-
-        shadow_train_x, shadow_train_y = shadow_i_x[:target_size], shadow_i_y[:target_size]
-        shadow_test_x, shadow_test_y = shadow_i_x[target_size:], shadow_i_y[target_size:]
-
-        if len(np.unique(shadow_train_y)) > 1 and len(np.unique(shadow_test_y)) > 1:
-            shadow_train_x, shadow_test_x, shadow_train_y, shadow_test_y = train_test_split(
-                shadow_train_x, shadow_train_y, test_size=0.3, stratify=shadow_train_y
-            )
-
-        np.savez(DATA_PATH + 'shadow{}_data.npz'.format(i), shadow_train_x, shadow_train_y, shadow_test_x,
-                 shadow_test_y)
-        print(f'Shadow data {i} saved to {DATA_PATH}shadow{i}_data.npz')
-
-    np.savez(MODEL_PATH + 'attack_train_classes.npz', y)
-    np.savez(MODEL_PATH + 'attack_test_classes.npz', test_y)
-    print(f'Attack classes saved to {MODEL_PATH}attack_train_classes.npz and {MODEL_PATH}attack_test_classes.npz')
-
-
 def load_data(data_name):
     file_path = DATA_PATH + data_name
     if not os.path.exists(file_path):
