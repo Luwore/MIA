@@ -5,8 +5,8 @@ import torchvision
 import torchvision.transforms as transforms
 
 
-MODEL_PATH = './model/'
-DATA_PATH = './data/'
+MODEL_PATH = '../model/'
+DATA_PATH = '../data/'
 
 
 def get_data_indices(data_size, target_train_size, n_shadow):

@@ -7,8 +7,8 @@ import torch.optim as optim
 import torch.nn as nn
 from utility import load_data
 
-MODEL_PATH = './model/'
-DATA_PATH = './data/'
+MODEL_PATH = '../model/'
+DATA_PATH = '../data/'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

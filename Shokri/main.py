@@ -1,8 +1,8 @@
 import argparse
 import os
 
-MODEL_PATH = './model/'
-DATA_PATH = './data/'
+MODEL_PATH = '../model/'
+DATA_PATH = '../data/'
 
 
 def main():

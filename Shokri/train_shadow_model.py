@@ -7,8 +7,8 @@ import os
 
 from train_victim_model import get_resnet18, train, test, load_data, criterion
 
-MODEL_PATH = './model/'
-DATA_PATH = './data/'
+MODEL_PATH = '../model/'
+DATA_PATH = '../data/'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
