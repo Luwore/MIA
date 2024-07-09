@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3bb87c48-b536-43dc-9b4c-dd99d490483a" name="Changes" comment="Adding augmentation for each epoch separately and Custom data class">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/Shokri.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Shokri.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train_victim_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_victim_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,6 +27,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitLabMergeRequestFiltersHistory"><![CDATA[{
+  "lastFilter": {}
+}]]></component>
   <component name="GitLabMergeRequestsSettings"><![CDATA[{
   "selectedUrlAndAccountId": {
     "first": "https://gitlab.kit.edu/kit/ps/students/bachelor-thesis-lukas-reith.git",
@@ -95,7 +103,7 @@
       <updated>1720441751361</updated>
       <workItem from="1720441752555" duration="390000" />
       <workItem from="1720467505592" duration="6183000" />
-      <workItem from="1720505493253" duration="13088000" />
+      <workItem from="1720505493253" duration="17476000" />
     </task>
     <task id="LOCAL-00001" summary="First commit">
       <option name="closed" value="true" />
@@ -121,7 +129,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720526213246</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Adding augmentation for each epoch separately and Custom data class">
+      <option name="closed" value="true" />
+      <created>1720526931258</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1720526931258</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
