@@ -1,13 +1,14 @@
 import numpy as np
 import torch
-from torch.nn import nn
+import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import torch.optim as optim
 
 from train_victim_model import get_resnet18, train, test, load_data
+from main import logger
 
-MODEL_PATH = '../model/'
-DATA_PATH = '../data/'
+MODEL_PATH = './model/'
+DATA_PATH = './data/'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -17,7 +18,7 @@ def train_shadow_models(args):
     classes = []
 
     for i in range(args.n_shadow):
-        print(f'Training shadow model {i}')
+        logger.info(f'Training shadow model {i}')
         dataset = load_data(f'shadow{i}_data.npz')
         train_x, train_y, test_x, test_y = dataset
 
@@ -35,7 +36,7 @@ def train_shadow_models(args):
         criterion = nn.CrossEntropyLoss()
 
         for epoch in range(args.target_epochs):
-            print(f'Shadow Model {i + 1} - Epoch {epoch + 1}/{args.target_epochs}')
+            logger.info(f'Shadow Model {i + 1} - Epoch {epoch + 1}/{args.target_epochs}')
             train(model, train_loader, criterion, optimizer, device)
             if test_loader:
                 test(model, test_loader, device)
@@ -43,7 +44,7 @@ def train_shadow_models(args):
 
         if args.save_model:
             torch.save(model.state_dict(), MODEL_PATH + f'shadow_model_{i}.pth')
-            print(f'Shadow model {i} saved to {MODEL_PATH}shadow_model_{i}.pth')
+            logger.info(f'Shadow model {i} saved to {MODEL_PATH}shadow_model_{i}.pth')
 
         model.eval()
         with torch.no_grad():

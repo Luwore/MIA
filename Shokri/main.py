@@ -1,8 +1,21 @@
 import argparse
 import os
+import logging
 
-MODEL_PATH = '../model/'
-DATA_PATH = '../data/'
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,  # Set the logging level
+    format='%(asctime)s - %(levelname)s \n %(message)s',
+    handlers=[
+        logging.FileHandler("log.log"),  # Log to file
+        logging.StreamHandler()  # Also log to console
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+MODEL_PATH = './model/'
+DATA_PATH = './data/'
 
 
 def main():
@@ -19,7 +32,7 @@ def main():
     parser.add_argument('--target_weight_decay', type=float, default=0.0008066364399035876)
     parser.add_argument('--target_batch_size', type=int, default=64)
     parser.add_argument('--target_epochs', type=int, default=50)
-    parser.add_argument('--attack_learning_rate', type=float, default=0.01)
+    parser.add_argument('--attack_learning_rate', type=float, default=0.09982464433214236)
     parser.add_argument('--attack_batch_size', type=int, default=100)
     parser.add_argument('--attack_epochs', type=int, default=50)
     parser.add_argument('--test_ratio', type=float, default=0.3)
@@ -32,11 +45,11 @@ def main():
         os.makedirs(DATA_PATH)
 
     if args.mode == 'victim':
-        from train_victim_model import train_target_model
         from utility import save_data
         target_data_path = DATA_PATH + 'target_data.npz'
         if not os.path.exists(target_data_path) or args.save_data:
             save_data(args)
+        from train_victim_model import train_target_model
         train_target_model(args)
     elif args.mode == 'shadow':
         from train_shadow_model import train_shadow_models
