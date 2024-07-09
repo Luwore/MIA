@@ -68,4 +68,5 @@ def train_shadow_models(args):
     classes = np.concatenate(classes)
 
     np.savez(MODEL_PATH + 'attack_train_data.npz', attack_x, attack_y)
+    np.savez(MODEL_PATH + 'attack_train_classes.npz', classes)
     return attack_x, attack_y, classes

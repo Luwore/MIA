@@ -110,6 +110,9 @@ def collect_test_data(model, train_loader, test_loader, train_y, test_y, name):
 
     attack_x = np.vstack(attack_x)
     attack_y = np.concatenate(attack_y).astype('int32')
+    classes = np.concatenate([train_y, test_y])
 
     np.savez(MODEL_PATH + name, attack_x, attack_y)
-    return attack_x, attack_y, np.concatenate([train_y, test_y])
+    np.savez(MODEL_PATH + 'attack_test_classes.npz', classes)
+    logger.info(f'Attack data saved to {MODEL_PATH}{name}')
+    return attack_x, attack_y, classes
