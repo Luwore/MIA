@@ -44,7 +44,11 @@ def main():
         from train_attack_model import train_attack_model
         train_attack_model(args)
     elif args.mode == 'run':
-        from run_attack_experiment import attack_experiment
+        from train_victim_model import save_data, train_target_model
+        target_data_path = DATA_PATH + 'target_data.npz'
+        if not os.path.exists(target_data_path) or args.save_data:
+            save_data(args)
+        from run_attack import attack_experiment
         attack_experiment(args)
 
 

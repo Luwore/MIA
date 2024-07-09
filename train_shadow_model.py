@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
+import torch.optim as optim
 from sklearn.model_selection import train_test_split
 import os
 
@@ -40,12 +41,16 @@ def train_shadow_models(args):
             test_loader = None
 
         model = get_resnet18().to(device)
-        optimizer = torch.optim.Adam(model.parameters(), lr=args.target_learning_rate)
+        optimizer = optim.SGD(model.parameters(), lr=args.target_learning_rate, momentum=args.target_momentum,
+                              weight_decay=args.target_weight_decay)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.target_epochs)
+
         for epoch in range(args.target_epochs):
             print(f'Shadow Model {i + 1} - Epoch {epoch + 1}/{args.target_epochs}')
             train(model, train_loader, criterion, optimizer, device)
             if test_loader:
                 test(model, test_loader, device)
+            scheduler.step()
 
         if args.save_model:
             torch.save(model.state_dict(), MODEL_PATH + f'shadow_model_{i}.pth')

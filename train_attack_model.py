@@ -1,7 +1,8 @@
 import numpy as np
 import torch
+from sklearn.metrics import accuracy_score, classification_report
 from torch.utils.data import DataLoader, TensorDataset
-from train_victim_model import get_resnet18, train, load_data, criterion
+from train_victim_model import get_resnet18, train, criterion
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

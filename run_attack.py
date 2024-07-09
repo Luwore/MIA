@@ -1,6 +1,7 @@
 from train_victim_model import load_data, train_target_model
-from train_shadow_models import train_shadow_models
+from train_shadow_model import train_shadow_models
 from train_attack_model import train_attack_model
+
 
 def attack_experiment(args):
     print('-' * 10 + 'TRAIN TARGET' + '-' * 10 + '\n')
