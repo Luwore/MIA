@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torchvision
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 import os
@@ -16,6 +16,7 @@ DATA_PATH = './data/'
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# Define data transformations for training and testing
 transform_train = transforms.Compose([
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
@@ -30,11 +31,9 @@ transform_test = transforms.Compose([
 
 criterion = nn.CrossEntropyLoss()
 
-
 def get_resnet18():
     model = resnet18(weights=None, num_classes=10).to(device)
     return model
-
 
 def train(model, train_loader, criterion, optimizer, device):
     model.train()
@@ -52,7 +51,6 @@ def train(model, train_loader, criterion, optimizer, device):
 
     print(f'Training loss: {running_loss / len(train_loader)}')
 
-
 def test(model, test_loader, device):
     model.eval()
     all_preds = []
@@ -69,7 +67,6 @@ def test(model, test_loader, device):
     print(f'Test Accuracy: {accuracy}')
     print(classification_report(all_labels, all_preds))
 
-
 def get_data_indices(data_size, target_train_size, n_shadow):
     indices = np.arange(data_size)
     np.random.shuffle(indices)
@@ -77,9 +74,29 @@ def get_data_indices(data_size, target_train_size, n_shadow):
     shadow_data_indices = np.array_split(indices[target_train_size:], n_shadow)
     return target_data_indices, shadow_data_indices
 
+class CustomCIFAR10Dataset(Dataset):
+    def __init__(self, data, targets, transform=None):
+        self.data = data
+        self.targets = targets
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, index):
+        img, target = self.data[index], self.targets[index]
+        img = np.transpose(img, (2, 0, 1))  # Convert HWC to CHW
+        img = torch.from_numpy(img).float() / 255.0  # Convert to tensor and normalize to [0, 1]
+        if self.transform:
+            img = self.transform(img)
+        return img, target
 
 def save_data(args):
     print('-' * 10 + 'SAVING DATA TO DISK' + '-' * 10 + '\n')
+
+    # Load CIFAR-10 dataset
+    train_dataset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True)
+    test_dataset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True)
 
     x = train_dataset.data
     y = np.array(train_dataset.targets)
@@ -131,7 +148,6 @@ def save_data(args):
     np.savez(MODEL_PATH + 'attack_test_classes.npz', test_y)
     print(f'Attack classes saved to {MODEL_PATH}attack_train_classes.npz and {MODEL_PATH}attack_test_classes.npz')
 
-
 def load_data(data_name):
     file_path = DATA_PATH + data_name
     if not os.path.exists(file_path):
@@ -143,22 +159,15 @@ def load_data(data_name):
     print(f'test_x shape: {test_x.shape}, test_y shape: {test_y.shape}')
     return train_x, train_y, test_x, test_y
 
-
-def train_target_model(args, dataset=load_data('target_data.npz')):
+def train_target_model(args):
+    dataset = load_data('target_data.npz')
     train_x, train_y, test_x, test_y = dataset
-    train_x = train_x.transpose((0, 3, 1, 2))
-    test_x = test_x.transpose((0, 3, 1, 2))
 
-    train_loader = DataLoader(TensorDataset(torch.tensor(train_x).float(), torch.tensor(train_y).long()),
-                              batch_size=args.target_batch_size, shuffle=True)
-    test_loader = DataLoader(TensorDataset(torch.tensor(test_x).float(), torch.tensor(test_y).long()),
-                             batch_size=args.target_batch_size, shuffle=False)
+    train_dataset = CustomCIFAR10Dataset(train_x, train_y, transform=transform_train)
+    test_dataset = CustomCIFAR10Dataset(test_x, test_y, transform=transform_test)
 
-    # Use DataLoader with transformations applied on-the-fly
-    train_loader = DataLoader(torchvision.datasets.CIFAR10(root='./data', train=True, transform=transform_train),
-                              batch_size=args.target_batch_size, shuffle=True, num_workers=2)
-    test_loader = DataLoader(torchvision.datasets.CIFAR10(root='./data', train=False, transform=transform_test),
-                             batch_size=args.target_batch_size, shuffle=False, num_workers=2)
+    train_loader = DataLoader(train_dataset, batch_size=args.target_batch_size, shuffle=True, num_workers=2)
+    test_loader = DataLoader(test_dataset, batch_size=args.target_batch_size, shuffle=False, num_workers=2)
 
     model = get_resnet18().to(device)
     optimizer = optim.SGD(model.parameters(), lr=args.target_learning_rate, momentum=args.target_momentum,
@@ -194,6 +203,7 @@ def train_target_model(args, dataset=load_data('target_data.npz')):
     attack_y = np.concatenate(attack_y).astype('int32')
 
     np.savez(MODEL_PATH + 'attack_test_data.npz', attack_x, attack_y)
+    print(f'Attack data saved to {MODEL_PATH}attack_test_data.npz')
 
     classes = np.concatenate([train_y, test_y])
     return attack_x, attack_y, classes
