@@ -3,44 +3,105 @@ import torch
 from sklearn.metrics import accuracy_score, classification_report
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
-from train_victim_model import get_resnet18, train
+import torch.nn.functional as F
+
 from main import logger
+import os
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
+class SimpleNN(nn.Module):
+    def __init__(self, n_in, n_hidden, n_out):
+        super(SimpleNN, self).__init__()
+        self.fc1 = nn.Linear(n_in, n_hidden)
+        self.fc2 = nn.Linear(n_hidden, n_out)
+
+    def forward(self, x):
+        x = torch.tanh(self.fc1(x))
+        x = F.softmax(self.fc2(x), dim=1)
+        return x
+
+
+def get_nn_model(n_in, n_hidden, n_out):
+    model = SimpleNN(n_in, n_hidden, n_out)
+    return model
+
+
 def load_attack_data():
-    fname = './model/attack_train_data.npz'
-    with np.load(fname) as f:
+    train_file = './model/attack_train_data.npz'
+    test_file = './model/attack_test_data.npz'
+    if not os.path.exists(train_file) or not os.path.exists(test_file):
+        logger.error(f"Required data files {train_file} and/or {test_file} do not exist.")
+        raise FileNotFoundError(f"Required data files {train_file} and/or {test_file} do not exist.")
+
+    with np.load(train_file) as f:
         train_x, train_y = [f['arr_%d' % i] for i in range(len(f.files))]
-    fname = './model/attack_test_data.npz'
-    with np.load(fname) as f:
+    with np.load(test_file) as f:
         test_x, test_y = [f['arr_%d' % i] for i in range(len(f.files))]
+
     return train_x.astype('float32'), train_y.astype('int32'), test_x.astype('float32'), test_y.astype('int32')
 
 
-def train_attack_model(args):
-    dataset = load_attack_data()
-    train_x, train_y, test_x, test_y = dataset
+def train_model(c_dataset, args):
+    c_train_x, c_train_y, c_test_x, c_test_y = c_dataset
 
-    if train_x.ndim == 2 and train_x.shape[1] == 10:
-        train_x = train_x.reshape((-1, 1, 10, 10))
-    if test_x.ndim == 2 and test_x.shape[1] == 10:
-        test_x = test_x.reshape((-1, 1, 10, 10))
+    # Flatten the input data if it's not already flattened
+    c_train_x = c_train_x.reshape(c_train_x.shape[0], -1)
+    c_test_x = c_test_x.reshape(c_test_x.shape[0], -1)
+
+    # Create DataLoader for training and testing
+    c_train_loader = DataLoader(TensorDataset(torch.tensor(c_train_x).float(), torch.tensor(c_train_y).long()),
+                                batch_size=args.attack_batch_size, shuffle=True)
+    c_test_loader = DataLoader(TensorDataset(torch.tensor(c_test_x).float(), torch.tensor(c_test_y).long()),
+                               batch_size=args.attack_batch_size, shuffle=False)
+
+    input_size = c_train_x.shape[1]
+    hidden_size = 128  # You can adjust this size
+    output_size = len(np.unique(c_train_y))  # Assuming the classes are labeled 0 to num_classes-1
+
+    # Initialize model, loss function, and optimizer
+    model = get_nn_model(input_size, hidden_size, output_size).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.attack_learning_rate)
+
+    # Training loop
+    for epoch in range(args.attack_epochs):
+        model.train()
+        running_loss = 0.0
+        for inputs, labels in c_train_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+
+        logger.info(f'Epoch [{epoch + 1}/{args.attack_epochs}], Loss: {running_loss / len(c_train_loader):.4f}')
+
+    # Evaluation
+    model.eval()
+    c_preds = []
+    with torch.no_grad():
+        for inputs, labels in c_test_loader:
+            inputs = inputs.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            c_preds.extend(preds.cpu().numpy())
+
+    return np.array(c_preds)
+
+
+def train_attack_model(args):
+    train_x, train_y, test_x, test_y = load_attack_data()
 
     train_y = train_y.flatten()
     test_y = test_y.flatten()
 
-    train_x = np.repeat(train_x, 3, axis=1)
-    test_x = np.repeat(test_x, 3, axis=1)
-
+    # Load train and test classes
     train_classes = np.load('./model/attack_train_classes.npz')['arr_0']
     test_classes = np.load('./model/attack_test_classes.npz')['arr_0']
-
-    if len(train_classes) != len(train_x):
-        train_classes = np.tile(train_classes, len(train_x) // len(train_classes) + 1)[:len(train_x)]
-    if len(test_classes) != len(test_x):
-        test_classes = np.tile(test_classes, len(test_x) // len(test_classes) + 1)[:len(test_x)]
 
     train_indices = np.arange(len(train_x))
     test_indices = np.arange(len(test_x))
@@ -63,33 +124,15 @@ def train_attack_model(args):
             continue
         c_test_x, c_test_y = test_x[c_test_indices], test_y[c_test_indices]
 
-        c_model = get_resnet18().to(device)
-        optimizer = torch.optim.Adam(c_model.parameters(), lr=args.attack_learning_rate)
-        criterion = nn.CrossEntropyLoss()
-        c_train_loader = DataLoader(TensorDataset(torch.tensor(c_train_x).float(), torch.tensor(c_train_y).long()),
-                                    batch_size=args.attack_batch_size, shuffle=True)
-        for epoch in range(args.attack_epochs):
-            logger.info(f'Attack Model for class {c} - Epoch {epoch + 1}/{args.attack_epochs}')
-            train(c_model, c_train_loader, criterion, optimizer, device)
+        c_dataset = (c_train_x, c_train_y, c_test_x, c_test_y)
 
-        c_model.eval()
-        with torch.no_grad():
-            c_test_loader = DataLoader(TensorDataset(torch.tensor(c_test_x).float(), torch.tensor(c_test_y).long()),
-                                       batch_size=args.attack_batch_size, shuffle=False)
-            c_preds = []
-            for inputs, labels in c_test_loader:
-                inputs = inputs.to(device)
-                outputs = c_model(inputs)
-                _, preds = torch.max(outputs, 1)
-                c_preds.extend(preds.cpu().numpy())
+        c_pred_y = train_model()
 
-            true_y.append(c_test_y)
-            pred_y.append(c_preds)
+        true_y.append(c_test_y)
+        pred_y.append(c_pred_y)
 
-    if true_y and pred_y:
-        true_y = np.concatenate(true_y)
-        pred_y = np.concatenate(pred_y)
-        logger.info('Testing Accuracy:', accuracy_score(true_y, pred_y))
-        logger.info(classification_report(true_y, pred_y))
-    else:
-        logger.warn('No data to evaluate.')
+    logger.info('-' * 10 + 'FINAL EVALUATION' + '-' * 10 + '\n')
+    true_y = np.concatenate(true_y)
+    pred_y = np.concatenate(pred_y)
+    logger.info('Testing Accuracy: {}'.format(accuracy_score(true_y, pred_y)))
+    logger.info(classification_report(true_y, pred_y))

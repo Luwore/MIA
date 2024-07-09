@@ -6,12 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="3bb87c48-b536-43dc-9b4c-dd99d490483a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shokri/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shokri/run_attack.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/run_attack.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Shokri/train_attack_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/train_attack_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shokri/train_shadow_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/train_shadow_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shokri/train_victim_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/train_victim_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shokri/utility.py" beforeDir="false" afterPath="$PROJECT_DIR$/Shokri/utility.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +107,7 @@
       <workItem from="1720467505592" duration="6183000" />
       <workItem from="1720505493253" duration="19747000" />
       <workItem from="1720533599383" duration="819000" />
-      <workItem from="1720542158177" duration="6192000" />
+      <workItem from="1720542158177" duration="9228000" />
     </task>
     <task id="LOCAL-00001" summary="First commit">
       <option name="closed" value="true" />
@@ -170,7 +165,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720534422229</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="adding logging">
+      <option name="closed" value="true" />
+      <created>1720548971339</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1720548971339</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -194,7 +197,8 @@
     <MESSAGE value="Splitting the victim_model class into utility for data loading operations" />
     <MESSAGE value="Re-Structure" />
     <MESSAGE value="Edit train_shadow_model.py" />
-    <option name="LAST_COMMIT_MESSAGE" value="Edit train_shadow_model.py" />
+    <MESSAGE value="adding logging" />
+    <option name="LAST_COMMIT_MESSAGE" value="adding logging" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Bachelor_Thesis$main.coverage" NAME="main Coverage Results" MODIFIED="1720546729345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
