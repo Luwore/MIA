@@ -1,9 +1,12 @@
 import click
-from attacks import shokri
+
+from Execution_Environment_MIA.attacks.shokri import perform_attack
+
 
 @click.group()
 def cli():
     pass
+
 
 @click.command()
 @click.option('--model', default='resnet18', help='Model to attack.')
@@ -14,7 +17,8 @@ def cli():
 @click.option('--hyperparameters', type=str, help='Hyperparameters for the models.')
 def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters):
     if attack == 'shokri':
-        shokri.perform_attack(model, dataset, shadow_model, attack_model, hyperparameters)
+        perform_attack(model, dataset, shadow_model, attack_model, hyperparameters)
+
 
 cli.add_command(attack)
 

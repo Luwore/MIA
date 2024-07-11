@@ -1,7 +1,7 @@
 import click
-from attacks import shokri, lira, loss
-from models import resnet
-from datasets import cifar10, cifar100, mnist, fmnist
+from Execution_Environment_MIA.attacks import shokri, lira, loss
+from Execution_Environment_MIA.models import resnet
+from Execution_Environment_MIA.datasets import cifar10, cifar100, mnist, fmnist
 
 @click.group()
 def cli():

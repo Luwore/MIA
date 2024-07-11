@@ -5,27 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3bb87c48-b536-43dc-9b4c-dd99d490483a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar10.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Execution_Environment_MIA/models/resnet.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Execution_Environment_MIA/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Execution_Environment_MIA/utils.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/attacks/init.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/attacks/lira.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/lira.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/attacks/loss.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/loss.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/attacks/shokri.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/shokri.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/datasets/cifar10.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/datasets/cifar100.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar100.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/datasets/fmnist.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/fmnist.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/datasets/init.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/datasets/mnist.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/mnist.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/models/init.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/models/resnet.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/models/SimpleNN.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/models/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution Enviroment MIA/utils.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +52,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/OneDrive/Dev/Bachelor Thesis",
+    "last_opened_file_path": "D:/OneDrive/Dev/Bachelor_Thesis",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -132,7 +115,8 @@
       <workItem from="1720533599383" duration="819000" />
       <workItem from="1720542158177" duration="19565000" />
       <workItem from="1720644722666" duration="720000" />
-      <workItem from="1720699395234" duration="2320000" />
+      <workItem from="1720699395234" duration="4334000" />
+      <workItem from="1720703815600" duration="332000" />
     </task>
     <task id="LOCAL-00001" summary="First commit">
       <option name="closed" value="true" />
@@ -222,7 +206,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720645341796</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Integrate existing code">
+      <option name="closed" value="true" />
+      <created>1720701920606</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1720701920606</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -252,7 +244,8 @@
     <MESSAGE value="New attack model (NN vs. ResNet) and general restructure of train_attack_model.py" />
     <MESSAGE value="Fixing everything. Shokri is working now." />
     <MESSAGE value="Rough execution environment structure" />
-    <option name="LAST_COMMIT_MESSAGE" value="Rough execution environment structure" />
+    <MESSAGE value="Integrate existing code" />
+    <option name="LAST_COMMIT_MESSAGE" value="Integrate existing code" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Bachelor_Thesis$main.coverage" NAME="main Coverage Results" MODIFIED="1720546729345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
