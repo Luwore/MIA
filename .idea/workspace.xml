@@ -5,10 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3bb87c48-b536-43dc-9b4c-dd99d490483a" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/setup.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/shokri.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/shokri.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar10.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar10.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -116,7 +117,7 @@
       <workItem from="1720542158177" duration="19565000" />
       <workItem from="1720644722666" duration="720000" />
       <workItem from="1720699395234" duration="4334000" />
-      <workItem from="1720703815600" duration="332000" />
+      <workItem from="1720703815600" duration="1989000" />
     </task>
     <task id="LOCAL-00001" summary="First commit">
       <option name="closed" value="true" />
@@ -214,7 +215,15 @@
       <option name="project" value="LOCAL" />
       <updated>1720701920606</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Adding everything that it can be an package">
+      <option name="closed" value="true" />
+      <created>1720704442460</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1720704442460</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -245,7 +254,8 @@
     <MESSAGE value="Fixing everything. Shokri is working now." />
     <MESSAGE value="Rough execution environment structure" />
     <MESSAGE value="Integrate existing code" />
-    <option name="LAST_COMMIT_MESSAGE" value="Integrate existing code" />
+    <MESSAGE value="Adding everything that it can be an package" />
+    <option name="LAST_COMMIT_MESSAGE" value="Adding everything that it can be an package" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Bachelor_Thesis$main.coverage" NAME="main Coverage Results" MODIFIED="1720546729345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

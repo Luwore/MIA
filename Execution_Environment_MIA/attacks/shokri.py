@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 
 def perform_attack(args):
     logger.info('-' * 10 + 'TRAIN TARGET' + '-' * 10)
-    dataset = load_data('target_data.npz')
-    train_target_model(args, dataset)
+    train_target_model(args)
 
     logger.info('-' * 10 + 'TRAIN SHADOW' + '-' * 10)
     train_shadow_models(args)
@@ -36,8 +35,8 @@ def perform_attack(args):
     train_attack_model(args)
 
 
-def train_target_model(args, dataset=load_data('target_data.npz')):
-    train_x, train_y, test_x, test_y = dataset
+def train_target_model(args):
+    train_x, train_y, test_x, test_y = load_data('target_data.npz', args)
 
     train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
                                             torch.Tensor(train_y).long()),

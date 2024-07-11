@@ -5,6 +5,9 @@ default_hyperparameters = {
         'batch_size': 64,
         'momentum': 0.8696976738695885,
         'weight_decay': 0.0008066364399035876,
+        'dataset_size': 10000,
+        'n_shadow': 10,
+        'test_ratio': 0.3,
     },
     # Hyperparameters for other models and attacks can be added here
 }

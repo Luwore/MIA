@@ -30,14 +30,14 @@ def get_data_indices(data_size, target_train_size, n_shadow):
     return target_data_indices, shadow_data_indices
 
 
-def load_data(data_name):
-    file_path = DATA_PATH + data_name
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f'File {file_path} does not exist.')
-    with np.load(file_path) as f:
-        train_x, train_y, test_x, test_y = [f['arr_%d' % i] for i in range(len(f.files))]
-    logger.info(f'Loaded {data_name}:')
-    return train_x, train_y, test_x, test_y
+# def load_data(data_name):
+#   file_path = DATA_PATH + data_name
+#  if not os.path.exists(file_path):
+#     raise FileNotFoundError(f'File {file_path} does not exist.')
+# with np.load(file_path) as f:
+#   train_x, train_y, test_x, test_y = [f['arr_%d' % i] for i in range(len(f.files))]
+# logger.info(f'Loaded {data_name}:')
+# return train_x, train_y, test_x, test_y
 
 
 def collect_test_data(model, train_loader, test_loader, train_y, test_y, name):
