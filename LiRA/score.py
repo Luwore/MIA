@@ -1,25 +1,34 @@
 import numpy as np
 import os
+import argparse
 
-save_path = 'exp/cifar10/'
+parser = argparse.ArgumentParser()
+parser.add_argument('--res_folder', type=str, required=True)
+args = parser.parse_args()
+lira_folder = args.res_folder
 
+for r, d, f in os.walk(lira_folder):
+    for file in f:
+        if "logit" in file:
+            opredictions = np.load(os.path.join(r, file))
 
-def compute_scores(logits):
-    scores = np.max(logits, axis=1)
-    return scores
+            # print(opredictions.shape)
 
+            labels = np.load(os.path.join(lira_folder, 'shadow_label.npy'))
+            ## Be exceptionally careful.
+            ## Numerically stable everything, as described in the paper.
+            predictions = opredictions - np.max(opredictions, axis=2, keepdims=True)
+            predictions = np.array(np.exp(predictions), dtype=np.float64)
+            predictions = predictions / np.sum(predictions, axis=2, keepdims=True)
+            COUNT = predictions.shape[0]
+            y_true = predictions[np.arange(COUNT), :, labels[:COUNT]]
 
-def main():
-    for i in range(16):
-        logits_dir = os.path.join(save_path, f'experiment_{i + 1}_of_16', 'logits')
-        logits = np.load(os.path.join(logits_dir, 'logits.npy'))
+            print('mean acc', np.mean(predictions[:, 0, :].argmax(1) == labels[:COUNT]), flush=True)
+            print()
 
-        scores = compute_scores(logits)
+            predictions[np.arange(COUNT), :, labels[:COUNT]] = 0
+            y_wrong = np.sum(predictions, axis=2)
 
-        scores_dir = os.path.join(save_path, f'experiment_{i + 1}_of_16', 'scores')
-        os.makedirs(scores_dir, exist_ok=True)
-        np.save(os.path.join(scores_dir, 'scores.npy'), scores)
+            logit = (np.log(y_true.mean((1)) + 1e-45) - np.log(y_wrong.mean((1)) + 1e-45))
 
-
-if __name__ == '__main__':
-    main()
+            np.save(os.path.join(lira_folder, '%s' % file.replace('logit', 'score')), logit)

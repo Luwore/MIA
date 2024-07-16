@@ -6,25 +6,31 @@ import torch
 from torch import nn
 
 sys.path.insert(0, './util/')
+from train_shadow import test
+import sys
+import os
+import torch.backends.cudnn as cudnn
+import torch.optim as optim
+import torch.utils.data as data
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+from torch.distributions import Categorical
+from torch.nn import functional as F
+from torchvision.models import resnet18
+
+float_formatter = "{:.4f}".format
+np.set_printoptions(formatter={'float_kind': float_formatter})
 import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--train_size', type=int, default=10000)
 parser.add_argument('--save_tag', type=str, default='0', help='current shadow model index')
-parser.add_argument('--gpu', type=str, default='2')
+parser.add_argument('--gpu', type=str, default='0')
 parser.add_argument('--res_folder', type=str, required=True)
+parser.add_argument('--isModifyOutput', type=int, default=0, help='indicator for using output modification')
 parser.add_argument('--org_path', type=str, required=True, help='path to the evaluated model')
 args = parser.parse_args()
-import os
-
 os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
-import os
-import torchvision.transforms as transforms
-import torchvision.datasets as datasets
-from torchvision.models import resnet18
-
-float_formatter = "{:.4f}".format
-np.set_printoptions(formatter={'float_kind': float_formatter})
 private_data_len = int(args.train_size * 0.9)
 ref_data_len = 0
 te_len = int(args.train_size * 0.1)
@@ -89,23 +95,17 @@ te_label = Y[
     all_indices[(private_data_len + ref_data_len + val_len):(private_data_len + ref_data_len + val_len + te_len)]]
 
 attack_te_data = X[all_indices[(private_data_len + ref_data_len + val_len + te_len):(
-            private_data_len + ref_data_len + val_len + te_len + attack_te_len)]]
+        private_data_len + ref_data_len + val_len + te_len + attack_te_len)]]
 attack_te_label = Y[all_indices[(private_data_len + ref_data_len + val_len + te_len):(
-            private_data_len + ref_data_len + val_len + te_len + attack_te_len)]]
+        private_data_len + ref_data_len + val_len + te_len + attack_te_len)]]
 
 attack_tr_data = X[all_indices[(private_data_len + ref_data_len + val_len + te_len + attack_te_len):(
-            private_data_len + ref_data_len + val_len + te_len + attack_te_len + attack_tr_len)]]
+        private_data_len + ref_data_len + val_len + te_len + attack_te_len + attack_tr_len)]]
 attack_tr_label = Y[all_indices[(private_data_len + ref_data_len + val_len + te_len + attack_te_len):(
-            private_data_len + ref_data_len + val_len + te_len + attack_te_len + attack_tr_len)]]
+        private_data_len + ref_data_len + val_len + te_len + attack_te_len + attack_tr_len)]]
 
 remaining_data = X[all_indices[(private_data_len + attack_te_len + attack_tr_len):]]
 remaining_label = Y[all_indices[(private_data_len + attack_te_len + attack_tr_len):]]
-
-all_non_private_data = X[all_indices[:private_data_len * 2]]
-all_non_private_label = Y[all_indices[:private_data_len * 2]]
-
-lira_folder = args.res_folder
-keep = np.load(os.path.join(lira_folder, '%s_keep.npy' % args.save_tag))
 
 # get private data and label tensors required to train the unprotected model
 private_data_tensor = torch.from_numpy(private_data).type(torch.FloatTensor)
@@ -180,16 +180,11 @@ checkpoint = os.path.dirname(resume_best)
 checkpoint = torch.load(resume_best, map_location='cuda')
 best_model.load_state_dict(checkpoint['state_dict'])
 
-'''
-except:
-    assert os.path.isfile(resume_best), 'Error: no checkpoint directory %s found for best model'%resume_best
-    checkpoint = os.path.dirname(resume_best)
-    checkpoint = torch.load(resume_best, map_location='cuda')
-
-    # this was used in training AdvReg model earlier
-    best_model = torch.nn.DataParallel(best_model)
-    best_model.load_state_dict(checkpoint['state_dict']) 
-'''
+_, best_test = test(te_data_tensor, te_label_tensor, best_model, criterion, use_cuda)
+_, best_val = test(val_data_tensor, val_label_tensor, best_model, criterion, use_cuda)
+_, best_train = test(private_data_tensor, private_label_tensor, best_model, criterion, use_cuda)
+print('\t===> %s  train acc %.4f val acc %.4f test acc %.4f' % (resume_best, best_train, best_val, best_test),
+      flush=True)
 
 
 def random_flip(img_set):
@@ -258,7 +253,6 @@ def softmax_by_row(logits, T=1.0):
 
 
 def _model_predictions(model, x, y, batch_size=256):
-    model.eval()
     return_outputs, return_labels = [], []
 
     return_labels = y.numpy()
@@ -287,6 +281,17 @@ def _model_predictions(model, x, y, batch_size=256):
     return (return_outputs, return_labels)
 
 
+lira_folder = args.res_folder
+
+if (not os.path.exists(lira_folder)):
+    os.mkdir(lira_folder)
+
+all_non_private_data = X[all_indices[:private_data_len * 2]]
+all_non_private_label = Y[all_indices[:private_data_len * 2]]
+
+keep = np.r_[np.ones(private_data_len), np.zeros(private_data_len)]
+keep = keep.astype(bool)
+
 all_shadow_data = all_non_private_data
 all_shadow_label = all_non_private_label
 all_shadow_data_tensor = torch.from_numpy(all_shadow_data).type(torch.FloatTensor)
@@ -297,8 +302,10 @@ return_outputs, return_labels = _model_predictions(best_model, all_shadow_data_t
 
 return_outputs = return_outputs[:, :, np.newaxis]
 return_outputs = return_outputs.transpose((0, 2, 1))
+
+print(return_outputs.shape)
+
 np.save(os.path.join(lira_folder, '%s_logit.npy' % args.save_tag), return_outputs)
+np.save(os.path.join(lira_folder, '%s_keep.npy' % args.save_tag), keep)
 # np.save( os.path.join(lira_folder, 'shadow_data.npy'),  all_shadow_data )
 np.save(os.path.join(lira_folder, 'shadow_label.npy'), all_shadow_label)
-
-print(args.save_tag)
