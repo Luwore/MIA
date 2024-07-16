@@ -1,0 +1,246 @@
+import functools
+import os
+import shutil
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+from torch.utils.data import DataLoader, Dataset
+from torchvision import datasets, transforms
+from torch.utils.tensorboard import SummaryWriter
+from absl import app, flags
+
+FLAGS = flags.FLAGS
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+class AugmentedDataset(Dataset):
+    def __init__(self, dataset, transform=None):
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        image, label = self.dataset[idx]
+        if self.transform:
+            image = self.transform(image)
+        return image, label
+
+
+def augment(shift: int, mirror=True):
+    transform_list = []
+    if mirror:
+        transform_list.append(transforms.RandomHorizontalFlip())
+    transform_list.append(transforms.Pad(shift, padding_mode='reflect'))
+    transform_list.append(transforms.RandomCrop(32))
+    return transforms.Compose(transform_list)
+
+
+class TrainLoop:
+    def __init__(self, model, optimizer, criterion, device):
+        self.model = model
+        self.optimizer = optimizer
+        self.criterion = criterion
+        self.device = device
+
+    def train_step(self, data_loader, epoch, log_interval=100):
+        self.model.train()
+        total_loss = 0
+        for batch_idx, (data, target) in enumerate(data_loader):
+            data, target = data.to(self.device), target.to(self.device)
+            self.optimizer.zero_grad()
+            output = self.model(data)
+            loss = self.criterion(output, target)
+            loss.backward()
+            self.optimizer.step()
+            total_loss += loss.item()
+            if batch_idx % log_interval == 0:
+                print(f'Train Epoch: {epoch} [{batch_idx * len(data)}/{len(data_loader.dataset)} '
+                      f'({100. * batch_idx / len(data_loader):.0f}%)]\tLoss: {loss.item():.6f}')
+        return total_loss / len(data_loader.dataset)
+
+    def evaluate(self, data_loader):
+        self.model.eval()
+        test_loss = 0
+        correct = 0
+        with torch.no_grad():
+            for data, target in data_loader:
+                data, target = data.to(self.device), target.to(self.device)
+                output = self.model(data)
+                test_loss += self.criterion(output, target).item()
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+
+        test_loss /= len(data_loader.dataset)
+        accuracy = 100. * correct / len(data_loader.dataset)
+        print(f'\nTest set: Average loss: {test_loss:.4f}, Accuracy: {correct}/{len(data_loader.dataset)} '
+              f'({accuracy:.0f}%)\n')
+        return test_loss, accuracy
+
+
+def network(arch: str):
+    if arch == 'cnn32-3-max':
+        return SimpleCNN(num_classes=10)
+    elif arch == 'wrn28-2':
+        return WideResNet(depth=28, width_factor=2, num_classes=10)
+    raise ValueError('Architecture not recognized', arch)
+
+
+class SimpleCNN(nn.Module):
+    def __init__(self, num_classes):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.fc1 = nn.Linear(64 * 8 * 8, 128)
+        self.fc2 = nn.Linear(128, num_classes)
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 64 * 8 * 8)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+
+class WideResNet(nn.Module):
+    def __init__(self, depth, width_factor, num_classes):
+        super(WideResNet, self).__init__()
+        self.depth = depth
+        self.width_factor = width_factor
+        self.num_classes = num_classes
+        self.build_model()
+
+    def build_model(self):
+        self.conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1, bias=False)
+        self.layer1 = self._make_layer(16, 16 * self.width_factor, self.depth // 3, stride=1)
+        self.layer2 = self._make_layer(16 * self.width_factor, 32 * self.width_factor, self.depth // 3, stride=2)
+        self.layer3 = self._make_layer(32 * self.width_factor, 64 * self.width_factor, self.depth // 3, stride=2)
+        self.bn = nn.BatchNorm2d(64 * self.width_factor)
+        self.fc = nn.Linear(64 * self.width_factor, self.num_classes)
+
+    def _make_layer(self, in_planes, out_planes, blocks, stride):
+        layers = []
+        strides = [stride] + [1] * (blocks - 1)
+        for stride in strides:
+            layers.append(nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False))
+            layers.append(nn.BatchNorm2d(out_planes))
+            layers.append(nn.ReLU(inplace=True))
+            in_planes = out_planes
+        return nn.Sequential(*layers)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.bn(x)
+        x = F.relu(x)
+        x = F.avg_pool2d(x, x.size()[3])  # Pool to the size of the feature map
+        x = x.view(x.size(0), -1)
+        x = self.fc(x)
+        return x
+
+
+def get_data(seed):
+    DATA_DIR = os.path.join(os.environ['HOME'], 'pytorch_data')
+
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+
+    train_dataset = datasets.CIFAR10(DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.CIFAR10(DATA_DIR, train=False, download=True, transform=transform)
+
+    if FLAGS.augment == 'weak':
+        aug_transform = augment(4)
+    elif FLAGS.augment == 'mirror':
+        aug_transform = augment(0)
+    elif FLAGS.augment == 'none':
+        aug_transform = transforms.Compose([transforms.ToTensor()])
+    else:
+        raise
+
+    train_dataset = AugmentedDataset(train_dataset, transform=aug_transform)
+    train_loader = DataLoader(train_dataset, batch_size=FLAGS.batch, shuffle=True, num_workers=2)
+    test_loader = DataLoader(test_dataset, batch_size=FLAGS.batch, shuffle=False, num_workers=2)
+
+    return train_loader, test_loader
+
+
+def main(argv):
+    del argv
+    seed = FLAGS.seed
+    if seed is None:
+        import time
+        seed = np.random.randint(0, 1000000000)
+        seed ^= int(time.time())
+
+    torch.manual_seed(seed)
+
+    model = network(FLAGS.arch).to(device)
+
+    print(f'Model parameters: {list(model.parameters())}')  # Debug statement
+
+    optimizer = optim.SGD(model.parameters(), lr=FLAGS.lr, momentum=FLAGS.momentum, weight_decay=FLAGS.weight_decay)
+    criterion = nn.CrossEntropyLoss()
+
+    train_loader, test_loader = get_data(seed)
+    train_loop = TrainLoop(model, optimizer, criterion, device)
+
+    logdir = os.path.join(FLAGS.logdir, 'run')
+    if os.path.exists(logdir):
+        shutil.rmtree(logdir)
+    os.makedirs(logdir)
+
+    writer = SummaryWriter(log_dir=logdir)
+
+    best_acc = 0
+    best_acc_epoch = -1
+
+    for epoch in range(1, FLAGS.epochs + 1):
+        train_loss = train_loop.train_step(train_loader, epoch)
+        test_loss, accuracy = train_loop.evaluate(test_loader)
+
+        writer.add_scalar('Loss/train', train_loss, epoch)
+        writer.add_scalar('Loss/test', test_loss, epoch)
+        writer.add_scalar('Accuracy/test', accuracy, epoch)
+
+        if accuracy > best_acc:
+            best_acc = accuracy
+            best_acc_epoch = epoch
+            torch.save(model.state_dict(), os.path.join(logdir, 'best_model.pth'))
+
+        if epoch % FLAGS.save_steps == 0:
+            torch.save(model.state_dict(), os.path.join(logdir, f'model_epoch_{epoch}.pth'))
+
+        if FLAGS.patience and epoch - best_acc_epoch > FLAGS.patience:
+            print("Early stopping!")
+            break
+
+    writer.close()
+
+
+if __name__ == '__main__':
+    flags.DEFINE_string('arch', 'cnn32-3-max', 'Model architecture.')
+    flags.DEFINE_float('lr', 0.1, 'Learning rate.')
+    flags.DEFINE_string('dataset', 'cifar10', 'Dataset.')
+    flags.DEFINE_float('weight_decay', 0.0005, 'Weight decay ratio.')
+    flags.DEFINE_float('momentum', 0.9, 'Momentum.')
+    flags.DEFINE_integer('batch', 64, 'Batch size')
+    flags.DEFINE_integer('epochs', 50, 'Training duration in number of epochs.')
+    flags.DEFINE_string('logdir', 'experiments', 'Directory where to save checkpoints and tensorboard data.')
+    flags.DEFINE_integer('seed', None, 'Training seed.')
+    flags.DEFINE_string('augment', 'weak', 'Strong or weak augmentation')
+    flags.DEFINE_integer('save_steps', 10, 'How often to save the model.')
+    flags.DEFINE_integer('patience', None, 'Early stopping patience')
+    app.run(main)
