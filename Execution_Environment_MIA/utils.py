@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import torch
+from sklearn.metrics import accuracy_score, classification_report
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

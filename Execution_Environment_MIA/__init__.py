@@ -3,9 +3,11 @@ from Execution_Environment_MIA.attacks import shokri, lira, loss
 from Execution_Environment_MIA.models import resnet
 from Execution_Environment_MIA.datasets import cifar10, cifar100, mnist, fmnist
 
+
 @click.group()
 def cli():
     pass
+
 
 @click.command()
 @click.option('--model', default='resnet18', help='Model to attack.')
@@ -36,6 +38,7 @@ def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters):
         lira.perform_attack(target_model, data, shadow_model, attack_model, hyperparameters)
     elif attack == 'loss':
         loss.perform_attack(target_model, data, hyperparameters)
+
 
 cli.add_command(attack)
 
