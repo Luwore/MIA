@@ -35,10 +35,6 @@ def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters, 
     if dataset == 'cifar10':
         data_loader = CIFAR10DataLoader()
 
-    # Set the attack instance based on the attack type
-    if attack == 'shokri':
-        attack_interstance = ShokriAttack
-
     data_loader.args = {
         'test_ratio': float(test_ratio),
         'target_data_size': int(target_data_size),
@@ -46,10 +42,13 @@ def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters, 
     }
     data_loader.load_data('target_data')
 
+    # Set the attack instance based on the attack type
+    if attack == 'shokri':
+        attack_interstance = ShokriAttack(model=model, hyperparameters=hyperparameters)
+
     attack_interstance.args = {
         'model': model,
         'dataset': dataset,
-        'attack': attack,
         'shadow_model': shadow_model,
         'attack_model': attack_model,
         'hyperparameters': hyperparameters,
@@ -57,10 +56,8 @@ def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters, 
         'target_data_size': target_data_size,
         'n_shadow': n_shadow
     }
-    attack_interstance.set_data_loader(data_loader)
+    attack_interstance.data_loader = data_loader
     attack_interstance.perform_attack()
-
-
 
 
 cli.add_command(attack)

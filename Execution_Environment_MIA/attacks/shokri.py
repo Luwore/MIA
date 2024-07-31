@@ -25,10 +25,9 @@ logger = logging.getLogger(__name__)
 
 class ShokriAttack(AttackInterface):
 
-    def __init__(self, custom_hyperparameters=None):
+    def __init__(self, model, hyperparameters):
         self.args = None
-        model_name = self.args['model']
-        self.hyperparameter = get_hyperparameters(model_name, custom_hyperparameters)
+        self.hyperparameter = get_hyperparameters(model, hyperparameters)
         self.data_loader = None
 
     def perform_attack(self):

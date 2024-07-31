@@ -6,11 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="3bb87c48-b536-43dc-9b4c-dd99d490483a" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/shokri.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/attacks/shokri.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/cli.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar10.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/datasets/cifar10.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/interfaces.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/interfaces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Execution_Environment_MIA/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/Execution_Environment_MIA/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -129,7 +128,7 @@
       <workItem from="1721634285118" duration="7834000" />
       <workItem from="1722229723128" duration="5975000" />
       <workItem from="1722236949244" duration="3624000" />
-      <workItem from="1722446956538" duration="7231000" />
+      <workItem from="1722446956538" duration="10721000" />
     </task>
     <task id="LOCAL-00001" summary="First commit">
       <option name="closed" value="true" />
@@ -283,7 +282,15 @@
       <option name="project" value="LOCAL" />
       <updated>1722449084730</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Building Interface for Attacks and remodeling the shokri.py">
+      <option name="closed" value="true" />
+      <created>1722454510824</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1722454510824</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -321,7 +328,8 @@
     <MESSAGE value="Another new structure" />
     <MESSAGE value="Adding gitignore" />
     <MESSAGE value="Introducing Abstract Database Class" />
-    <option name="LAST_COMMIT_MESSAGE" value="Introducing Abstract Database Class" />
+    <MESSAGE value="Building Interface for Attacks and remodeling the shokri.py" />
+    <option name="LAST_COMMIT_MESSAGE" value="Building Interface for Attacks and remodeling the shokri.py" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Bachelor_Thesis$main.coverage" NAME="main Coverage Results" MODIFIED="1720546729345" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />

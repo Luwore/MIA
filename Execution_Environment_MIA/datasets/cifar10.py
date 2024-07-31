@@ -20,6 +20,10 @@ class CIFAR10DataLoader(AbstractDataLoader):
         file_path = os.path.join(DATA_PATH, file_name)
         if not os.path.exists(file_path):
             self.save_data()
+        with np.load(file_path) as f:
+            train_x, train_y, test_x, test_y = [f['arr_%d' % i] for i in range(len(f.files))]
+        logger.info(f'Loaded {file_name}:')
+        return train_x, train_y, test_x, test_y
 
     def save_data(self):
         logger.info('-' * 10 + 'SAVING DATA TO DISK' + '-' * 10 + '\n')
@@ -54,7 +58,8 @@ class CIFAR10DataLoader(AbstractDataLoader):
         target_data_indices, shadow_indices = get_data_indices(len(x), target_train_size=self.args['target_data_size'],
                                                                n_shadow=self.args['n_shadow'])
 
-        np.savez(os.path.join(MODEL_PATH, 'data_indices.npz'), target_data_indices, shadow_indices)
+        os.makedirs(MODEL_PATH, exist_ok=True)
+        np.savez(MODEL_PATH + 'data_indices.npz', target_data_indices, shadow_indices)
 
         logger.info('Saving data for target model')
         train_x, train_y = x[target_data_indices], y[target_data_indices]
@@ -62,16 +67,17 @@ class CIFAR10DataLoader(AbstractDataLoader):
         if size < len(test_x):
             test_x = test_x[:size]
             test_y = test_y[:size]
+        os.makedirs(DATA_PATH, exist_ok=True)
         np.savez(os.path.join(DATA_PATH, 'target_data.npz'), train_x, train_y, test_x, test_y)
         logger.info(f'Target data saved to {DATA_PATH}target_data.npz')
 
-        for i in range(self.args.n_shadow):
+        for i in range(self.args['n_shadow']):
             logger.info(f'Saving data for shadow model {i}')
             shadow_i_indices = shadow_indices[i]
 
             shadow_i_x, shadow_i_y = x[shadow_i_indices], y[shadow_i_indices]
             shadow_train_x, shadow_test_x, shadow_train_y, shadow_test_y = train_test_split(
-                shadow_i_x, shadow_i_y, test_size=self.args.test_ratio, stratify=shadow_i_y
+                shadow_i_x, shadow_i_y, test_size=self.args['test_ratio'], stratify=shadow_i_y
             )
 
             np.savez(os.path.join(DATA_PATH, f'shadow{i}_data.npz'), shadow_train_x, shadow_train_y, shadow_test_x,

@@ -7,8 +7,9 @@ from sklearn.metrics import accuracy_score, classification_report
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-MODEL_PATH = 'source/model/'
-DATA_PATH = 'source/data/'
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = BASE_PATH + '/source/model/'
+DATA_PATH = BASE_PATH + '/source/data/'
 
 # Configure logging
 logging.basicConfig(
