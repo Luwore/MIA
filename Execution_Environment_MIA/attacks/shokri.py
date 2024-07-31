@@ -45,7 +45,7 @@ class ShokriAttack(AttackInterface):
 
         train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
                                                 torch.Tensor(train_y).long()),
-                                  batch_size=self.hyperparameter.batch_size, shuffle=True, num_workers=2)
+                                  batch_size=self.hyperparameter['batch_size'], shuffle=True, num_workers=2)
         test_loader = DataLoader(TensorDataset(torch.Tensor(test_x).permute(0, 3, 1, 2),
                                                torch.Tensor(test_y).long()),
                                  batch_size=self.hyperparameter.batch_size, shuffle=False, num_workers=2)

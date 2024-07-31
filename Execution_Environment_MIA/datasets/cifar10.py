@@ -17,7 +17,7 @@ class CIFAR10DataLoader(AbstractDataLoader):
         self.data_name = None
 
     def load_data(self, file_name: str):
-        file_path = os.path.join(DATA_PATH, file_name)
+        file_path = os.path.join(DATA_PATH, file_name + '_data.npz')
         if not os.path.exists(file_path):
             self.save_data()
         with np.load(file_path) as f:

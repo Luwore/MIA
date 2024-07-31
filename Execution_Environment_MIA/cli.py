@@ -40,7 +40,7 @@ def attack(model, dataset, attack, shadow_model, attack_model, hyperparameters, 
         'target_data_size': int(target_data_size),
         'n_shadow': int(n_shadow)
     }
-    data_loader.load_data('target_data')
+    data_loader.load_data('target')
 
     # Set the attack instance based on the attack type
     if attack == 'shokri':
