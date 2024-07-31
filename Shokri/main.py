@@ -58,7 +58,6 @@ def main():
         from train_attack_model import train_attack_model
         train_attack_model(args)
     elif args.mode == 'run':
-        from train_victim_model import train_target_model
         from utility import save_data
         target_data_path = DATA_PATH + 'target_data.npz'
         if not os.path.exists(target_data_path) or args.save_data:

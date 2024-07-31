@@ -6,7 +6,6 @@ from sklearn.metrics import accuracy_score, classification_report
 from torch import optim, nn
 from torch.utils.data import DataLoader, TensorDataset
 
-from Execution_Environment_MIA.datasets.cifar10 import load_data
 from Execution_Environment_MIA.models.SimpleNN import get_nn_model
 from Execution_Environment_MIA.models.resnet import get_resnet18
 from Execution_Environment_MIA.utils import device, MODEL_PATH, collect_test_data, train, test
@@ -36,7 +35,7 @@ def perform_attack(args):
 
 
 def train_target_model(args):
-    train_x, train_y, test_x, test_y = load_data('target_data.npz', args)
+    train_x, train_y, test_x, test_y = get_data('target')
 
     train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
                                             torch.Tensor(train_y).long()),
@@ -70,7 +69,7 @@ def train_shadow_models(args):
 
     for i in range(args.n_shadow):
         logger.info(f'Training shadow model {i}')
-        dataset = load_data(f'shadow{i}_data.npz')
+        dataset = get_data(f'shadow{i}')
         train_x, train_y, test_x, test_y = dataset
 
         train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
@@ -228,6 +227,3 @@ def load_attack_data():
 
     return (train_x.astype('float32'), train_y.astype('int32'), test_x.astype('float32'), test_y.astype('int32'),
             test_classes, train_classes)
-
-
-
