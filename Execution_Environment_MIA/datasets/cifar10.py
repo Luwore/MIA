@@ -45,13 +45,15 @@ class CIFAR10DataLoader(AbstractDataLoader):
         test_y = np.array(test_dataset.targets)
 
         if test_x is None or len(test_x) == 0:
-            logger.info(f'Splitting train/test data with ratio {1 - self.args.test_ratio}/{self.args.test_ratio}')
-            x, test_x, y, test_y = train_test_split(x, y, test_size=self.args.test_ratio, stratify=y)
+            logger.info(
+                f'Splitting train/test data with ratio {1 - self.args["test_ratio"]}/{self.args["test_ratio"]}')
+            x, test_x, y, test_y = train_test_split(x, y, test_size=self.args['test_ratio'], stratify=y)
 
-        assert len(x) > 2 * self.args.target_data_size
+        assert len(x) > 2 * self.args['target_data_size']
 
-        target_data_indices, shadow_indices = get_data_indices(len(x), target_train_size=self.args.target_data_size,
-                                                               n_shadow=self.args.n_shadow)
+        target_data_indices, shadow_indices = get_data_indices(len(x), target_train_size=self.args['target_data_size'],
+                                                               n_shadow=self.args['n_shadow'])
+
         np.savez(os.path.join(MODEL_PATH, 'data_indices.npz'), target_data_indices, shadow_indices)
 
         logger.info('Saving data for target model')
