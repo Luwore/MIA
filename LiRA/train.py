@@ -26,17 +26,27 @@ class AugmentedDataset(Dataset):
 
     def __getitem__(self, idx):
         image, label = self.dataset[idx]
+
+        # Ensure the image is in the correct format and shape
+        if isinstance(image, torch.Tensor):
+            if image.shape[1] != 32 or image.shape[2] != 32:  # Check if the shape is not (C, H, W)
+                image = image.permute(1, 2, 0)  # Convert to (H, W, C)
+            image = transforms.ToPILImage()(image)
+
         if self.transform:
             image = self.transform(image)
+            # Debug: Print the transformed size of the image
+
         return image, label
 
 
 def augment(shift: int):
-    transform_list = [
+    transform = transforms.Compose([
+        transforms.RandomCrop(32, padding=shift),
         transforms.RandomHorizontalFlip(),
-        transforms.RandomCrop(32, padding=4)  # Ensure the crop size is valid
-    ]
-    return transforms.Compose(transform_list)
+        transforms.ToTensor(),
+    ])
+    return transform
 
 
 class TrainLoop:
@@ -163,7 +173,7 @@ def get_data(seed):
         ])
         full_train_dataset = datasets.CIFAR10(DATA_DIR, train=True, download=True, transform=transform)
 
-        inputs = np.array([img.numpy() for img, _ in full_train_dataset])
+        inputs = np.array([np.array(img) for img, _ in full_train_dataset])
         labels = np.array([label for _, label in full_train_dataset])
 
         # Normalize inputs to [-1, 1]
@@ -270,7 +280,7 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    flags.DEFINE_string('arch', 'cnn32-3-mean', 'Model architecture.')
+    flags.DEFINE_string('arch', 'cnn32-3-max', 'Model architecture.')
     flags.DEFINE_float('lr', 0.1, 'Learning rate.')
     flags.DEFINE_string('dataset', 'cifar10', 'Dataset.')
     flags.DEFINE_float('weight_decay', 0.0005, 'Weight decay ratio.')
@@ -280,14 +290,14 @@ if __name__ == '__main__':
     flags.DEFINE_string('logdir', 'experiments', 'Directory where to save checkpoints and tensorboard data.')
     flags.DEFINE_integer('seed', None, 'Training seed.')
     flags.DEFINE_float('pkeep', .5, 'Probability to keep examples.')
-    flags.DEFINE_integer('expid', None, 'Experiment ID')
-    flags.DEFINE_integer('num_experiments', None, 'Number of experiments')
+    flags.DEFINE_integer('expid', 0, 'Experiment ID')  # Default value for expid
+    flags.DEFINE_integer('num_experiments', 1, 'Number of experiments')  # Default value for num_experiments
     flags.DEFINE_string('augment', 'weak', 'Strong or weak augmentation')
     flags.DEFINE_integer('only_subset', None, 'Only train on a subset of images.')
-    flags.DEFINE_integer('dataset_size', 50000, 'number of examples to keep.')
-    flags.DEFINE_integer('eval_steps', 1, 'how often to get eval accuracy.')
-    flags.DEFINE_integer('abort_after_epoch', None, 'stop trainin early at an epoch')
-    flags.DEFINE_integer('save_steps', 10, 'how often to get save model.')
+    flags.DEFINE_integer('dataset_size', 50000, 'Number of examples to keep.')
+    flags.DEFINE_integer('eval_steps', 1, 'How often to get eval accuracy.')
+    flags.DEFINE_integer('abort_after_epoch', None, 'Stop training early at an epoch')
+    flags.DEFINE_integer('save_steps', 10, 'How often to save model.')
     flags.DEFINE_integer('patience', None, 'Early stopping after this many epochs without progress')
     flags.DEFINE_bool('tunename', False, 'Use tune name?')
 
