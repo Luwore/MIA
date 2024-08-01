@@ -91,3 +91,18 @@ def test(model, test_loader, device):
     accuracy = accuracy_score(all_labels, all_preds)
     logger.info(f'Test Accuracy: {accuracy}')
     logger.info(classification_report(all_labels, all_preds))
+
+
+def load_attack_data():
+    train_file = './model/attack_train_data.npz'
+    test_file = './model/attack_test_data.npz'
+    test_classes = np.load('./model/attack_test_classes.npz')
+    train_classes = np.load('./model/attack_train_classes.npz')
+
+    with np.load(train_file) as f:
+        train_x, train_y = [f['arr_%d' % i] for i in range(len(f.files))]
+    with np.load(test_file) as f:
+        test_x, test_y = [f['arr_%d' % i] for i in range(len(f.files))]
+
+    return (train_x.astype('float32'), train_y.astype('int32'), test_x.astype('float32'), test_y.astype('int32'),
+            test_classes, train_classes)

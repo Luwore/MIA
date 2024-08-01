@@ -6,7 +6,7 @@ from torch import optim, nn
 from torch.utils.data import DataLoader, TensorDataset
 from Execution_Environment_MIA.models.SimpleNN import get_nn_model
 from Execution_Environment_MIA.models.resnet import get_resnet18
-from Execution_Environment_MIA.utils import device, MODEL_PATH, collect_test_data, train, test
+from Execution_Environment_MIA.utils import device, MODEL_PATH, collect_test_data, train, test, load_attack_data
 from Execution_Environment_MIA.interfaces import AttackInterface
 from Execution_Environment_MIA.config import get_hyperparameters
 
@@ -127,7 +127,7 @@ class ShokriAttack(AttackInterface):
         return attack_x, attack_y, classes
 
     def train_attack_model(self):
-        train_x, train_y, test_x, test_y, test_classes, train_classes = self.load_attack_data()
+        train_x, train_y, test_x, test_y, test_classes, train_classes = load_attack_data()
 
         train_y = train_y.flatten()
         test_y = test_y.flatten()
@@ -167,7 +167,7 @@ class ShokriAttack(AttackInterface):
         logger.info(classification_report(true_y, pred_y, zero_division=0))
         logger.info('Attack model training completed.')
 
-    def train_model(self, c_dataset, model):
+    def train_model(self, c_dataset):
         c_train_x, c_train_y, c_test_x, c_test_y = c_dataset
 
         # Flatten the input data if it's not already flattened
@@ -176,9 +176,9 @@ class ShokriAttack(AttackInterface):
 
         # Create DataLoader for training and testing
         c_train_loader = DataLoader(TensorDataset(torch.tensor(c_train_x).float(), torch.tensor(c_train_y).long()),
-                                    batch_size=self.hyperparameter['attack_batch_size'], shuffle=True)
+                                    batch_size=self.hyperparameter['batch_size'], shuffle=True)
         c_test_loader = DataLoader(TensorDataset(torch.tensor(c_test_x).float(), torch.tensor(c_test_y).long()),
-                                   batch_size=self.hyperparameter['attack_batch_size'], shuffle=False)
+                                   batch_size=self.hyperparameter['batch_size'], shuffle=False)
 
         input_size = c_train_x.shape[1]
         hidden_size = 128  # You can adjust this size
@@ -187,10 +187,10 @@ class ShokriAttack(AttackInterface):
         # Initialize model, loss function, and optimizer
         model = get_nn_model(input_size, hidden_size, output_size).to(device)
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.hyperparameter['attack_learning_rate'])
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.hyperparameter['learning_rate'])
 
         # Training loop
-        for epoch in range(self.hyperparameter['attack_epochs']):
+        for epoch in range(self.hyperparameter['epochs']):
             model.train()
             running_loss = 0.0
             for inputs, labels in c_train_loader:
@@ -203,7 +203,7 @@ class ShokriAttack(AttackInterface):
                 running_loss += loss.item()
 
             logger.info(
-                f'Epoch [{epoch + 1}/{self.hyperparameter["attack_epochs"]}], Loss: {running_loss / len(c_train_loader):.4f}')
+                f'Epoch [{epoch + 1}/{self.hyperparameter["epochs"]}], Loss: {running_loss / len(c_train_loader):.4f}')
 
         # Evaluation
         model.eval()

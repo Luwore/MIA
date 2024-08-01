@@ -1,7 +1,8 @@
 default_hyperparameters = {
     'resnet18': {
         'learning_rate': 0.09982464433214236,
-        'epochs': 50,
+        'epochs': 5,
+        #50
         'batch_size': 64,
         'momentum': 0.8696976738695885,
         'weight_decay': 0.0008066364399035876,
