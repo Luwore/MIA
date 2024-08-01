@@ -15,7 +15,7 @@ def cli():
 @click.option('--dataset', default='cifar10', help='Dataset to use.')
 @click.option('--attack', default='shokri', help='Attack type to use.')
 @click.option('--shadow_model', default='resnet18', help='Shadow model type.')
-@click.option('--n_shadow', default='20', help='Number of shadow models.')
+@click.option('--n_shadow', default=20, help='Number of shadow models.')
 @click.option('--attack_model', default='mlp', help='Attack model type.')
 @click.option('--test_ratio', default=0.2, help='Test ratio for splitting data.')
 @click.option('--target_data_size', default=5000, help='Size of target data.')

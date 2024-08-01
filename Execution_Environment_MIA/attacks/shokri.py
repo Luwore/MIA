@@ -74,7 +74,7 @@ class ShokriAttack(AttackInterface):
 
         for i in range(self.args['n_shadow']):
             logger.info(f'Training shadow model {i}')
-            dataset = self.get_data(f'shadow{i}')
+            dataset = self.data_loader.load_data('shadow' + str(i))
             train_x, train_y, test_x, test_y = dataset
 
             train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
