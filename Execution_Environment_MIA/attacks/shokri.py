@@ -48,16 +48,17 @@ class ShokriAttack(AttackInterface):
                                   batch_size=self.hyperparameter['batch_size'], shuffle=True, num_workers=2)
         test_loader = DataLoader(TensorDataset(torch.Tensor(test_x).permute(0, 3, 1, 2),
                                                torch.Tensor(test_y).long()),
-                                 batch_size=self.hyperparameter.batch_size, shuffle=False, num_workers=2)
+                                 batch_size=self.hyperparameter['batch_size'], shuffle=False, num_workers=2)
 
         model = get_resnet18().to(device)
-        optimizer = optim.SGD(model.parameters(), lr=self.hyperparameter.learning_rate, momentum=self.hyperparameter.momentum,
-                              weight_decay=self.hyperparameter.weight_decay)
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hyperparameter.epochs)
+        optimizer = optim.SGD(model.parameters(), lr=self.hyperparameter['learning_rate'],
+                              momentum=self.hyperparameter['momentum'],
+                              weight_decay=self.hyperparameter['weight_decay'])
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hyperparameter['epochs'])
         criterion = nn.CrossEntropyLoss()
 
-        for epoch in range(self.hyperparameter.epochs):
-            logger.info(f'Target Model - Epoch {epoch + 1}/{self.hyperparameter.epochs}')
+        for epoch in range(self.hyperparameter['epochs']):
+            logger.info(f'Target Model - Epoch {epoch + 1}/{self.hyperparameter["epochs"]}')
             train(model, train_loader, criterion, optimizer, device)
             test(model, test_loader, device)
             scheduler.step()
@@ -71,26 +72,27 @@ class ShokriAttack(AttackInterface):
         attack_x, attack_y = [], []
         classes = []
 
-        for i in range(self.args.n_shadow):
+        for i in range(self.args['n_shadow']):
             logger.info(f'Training shadow model {i}')
             dataset = self.get_data(f'shadow{i}')
             train_x, train_y, test_x, test_y = dataset
 
             train_loader = DataLoader(TensorDataset(torch.Tensor(train_x).permute(0, 3, 1, 2),
                                                     torch.Tensor(train_y).long()),
-                                      batch_size=self.hyperparameter.batch_size, shuffle=True, num_workers=2)
+                                      batch_size=self.hyperparameter['batch_size'], shuffle=True, num_workers=2)
             test_loader = DataLoader(TensorDataset(torch.Tensor(test_x).permute(0, 3, 1, 2),
                                                    torch.Tensor(test_y).long()),
-                                     batch_size=self.hyperparameter.batch_size, shuffle=False, num_workers=2)
+                                     batch_size=self.hyperparameter['batch_size'], shuffle=False, num_workers=2)
 
             model = get_resnet18().to(device)
-            optimizer = optim.SGD(model.parameters(), lr=self.hyperparameter.learning_rate, momentum=self.hyperparameter.momentum,
-                                  weight_decay=self.hyperparameter.weight_decay)
-            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hyperparameter.epochs)
+            optimizer = optim.SGD(model.parameters(), lr=self.hyperparameter['learning_rate'],
+                                  momentum=self.hyperparameter['momentum'],
+                                  weight_decay=self.hyperparameter['weight_decay'])
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=self.hyperparameter['epochs'])
             criterion = nn.CrossEntropyLoss()
 
-            for epoch in range(self.hyperparameter.epochs):
-                logger.info(f'Shadow Model {i + 1} - Epoch {epoch + 1}/{self.hyperparameter.epochs}')
+            for epoch in range(self.hyperparameter['epochs']):
+                logger.info(f'Shadow Model {i + 1} - Epoch {epoch + 1}/{self.hyperparameter["epochs"]}')
                 train(model, train_loader, criterion, optimizer, device)
                 if test_loader:
                     test(model, test_loader, device)
@@ -165,7 +167,7 @@ class ShokriAttack(AttackInterface):
         logger.info(classification_report(true_y, pred_y, zero_division=0))
         logger.info('Attack model training completed.')
 
-    def train_model(self, c_dataset):
+    def train_model(self, c_dataset, model):
         c_train_x, c_train_y, c_test_x, c_test_y = c_dataset
 
         # Flatten the input data if it's not already flattened
@@ -174,9 +176,9 @@ class ShokriAttack(AttackInterface):
 
         # Create DataLoader for training and testing
         c_train_loader = DataLoader(TensorDataset(torch.tensor(c_train_x).float(), torch.tensor(c_train_y).long()),
-                                    batch_size=self.hyperparameter.attack_batch_size, shuffle=True)
+                                    batch_size=self.hyperparameter['attack_batch_size'], shuffle=True)
         c_test_loader = DataLoader(TensorDataset(torch.tensor(c_test_x).float(), torch.tensor(c_test_y).long()),
-                                   batch_size=self.hyperparameter.attack_batch_size, shuffle=False)
+                                   batch_size=self.hyperparameter['attack_batch_size'], shuffle=False)
 
         input_size = c_train_x.shape[1]
         hidden_size = 128  # You can adjust this size
@@ -185,10 +187,10 @@ class ShokriAttack(AttackInterface):
         # Initialize model, loss function, and optimizer
         model = get_nn_model(input_size, hidden_size, output_size).to(device)
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=self.hyperparameter.attack_learning_rate)
+        optimizer = torch.optim.Adam(model.parameters(), lr=self.hyperparameter['attack_learning_rate'])
 
         # Training loop
-        for epoch in range(self.hyperparameter.attack_epochs):
+        for epoch in range(self.hyperparameter['attack_epochs']):
             model.train()
             running_loss = 0.0
             for inputs, labels in c_train_loader:
@@ -201,7 +203,7 @@ class ShokriAttack(AttackInterface):
                 running_loss += loss.item()
 
             logger.info(
-                f'Epoch [{epoch + 1}/{self.hyperparameter.attack_epochs}], Loss: {running_loss / len(c_train_loader):.4f}')
+                f'Epoch [{epoch + 1}/{self.hyperparameter["attack_epochs"]}], Loss: {running_loss / len(c_train_loader):.4f}')
 
         # Evaluation
         model.eval()
