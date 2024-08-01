@@ -31,12 +31,11 @@ class AugmentedDataset(Dataset):
         return image, label
 
 
-def augment(shift: int, mirror=True):
-    transform_list = []
-    if mirror:
-        transform_list.append(transforms.RandomHorizontalFlip())
-    transform_list.append(transforms.Pad(shift, padding_mode='reflect'))
-    transform_list.append(transforms.RandomCrop(32))
+def augment(shift: int):
+    transform_list = [
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomCrop(32, padding=4)  # Ensure the crop size is valid
+    ]
     return transforms.Compose(transform_list)
 
 
@@ -150,16 +149,45 @@ class WideResNet(nn.Module):
 def get_data(seed):
     DATA_DIR = os.path.join(os.environ['HOME'], 'pytorch_data')
 
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
+    if not os.path.exists(FLAGS.logdir):
+        os.makedirs(FLAGS.logdir)
 
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,))
-    ])
+    if os.path.exists(os.path.join(FLAGS.logdir, "x_train.npy")):
+        inputs = np.load(os.path.join(FLAGS.logdir, "x_train.npy"))
+        labels = np.load(os.path.join(FLAGS.logdir, "y_train.npy"))
+    else:
+        print("First time, creating dataset")
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])
+        full_train_dataset = datasets.CIFAR10(DATA_DIR, train=True, download=True, transform=transform)
 
-    train_dataset = datasets.CIFAR10(DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.CIFAR10(DATA_DIR, train=False, download=True, transform=transform)
+        inputs = np.array([img.numpy() for img, _ in full_train_dataset])
+        labels = np.array([label for _, label in full_train_dataset])
+
+        # Normalize inputs to [-1, 1]
+        inputs = (inputs / 127.5) - 1
+        np.save(os.path.join(FLAGS.logdir, "x_train.npy"), inputs)
+        np.save(os.path.join(FLAGS.logdir, "y_train.npy"), labels)
+
+    nclass = np.max(labels) + 1
+
+    np.random.seed(seed)
+    if FLAGS.num_experiments is not None:
+        np.random.seed(0)
+        keep = np.random.uniform(0, 1, size=(FLAGS.num_experiments, FLAGS.dataset_size))
+        order = keep.argsort(axis=0)
+        keep = order < int(FLAGS.pkeep * FLAGS.num_experiments)
+        keep = np.array(keep[FLAGS.expid], dtype=bool)
+    else:
+        keep = np.random.uniform(0, 1, size=FLAGS.dataset_size) <= FLAGS.pkeep
+
+    if FLAGS.only_subset is not None:
+        keep[FLAGS.only_subset:] = 0
+
+    xs = inputs[keep]
+    ys = labels[keep]
 
     if FLAGS.augment == 'weak':
         aug_transform = augment(4)
@@ -168,13 +196,23 @@ def get_data(seed):
     elif FLAGS.augment == 'none':
         aug_transform = transforms.Compose([transforms.ToTensor()])
     else:
-        raise
+        raise ValueError("Unknown augmentation type")
 
-    train_dataset = AugmentedDataset(train_dataset, transform=aug_transform)
+    # Convert numpy arrays back to a dataset
+    dataset = [(torch.tensor(img).permute(2, 0, 1), torch.tensor(label)) for img, label in zip(xs, ys)]
+
+    # Applying augmentation
+    train_dataset = AugmentedDataset(dataset, transform=aug_transform)
     train_loader = DataLoader(train_dataset, batch_size=FLAGS.batch, shuffle=True, num_workers=2)
+
+    test_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5,), (0.5,))
+    ])
+    test_dataset = datasets.CIFAR10(DATA_DIR, train=False, download=True, transform=test_transform)
     test_loader = DataLoader(test_dataset, batch_size=FLAGS.batch, shuffle=False, num_workers=2)
 
-    return train_loader, test_loader
+    return train_loader, test_loader, xs, ys, keep, nclass
 
 
 def main(argv):
@@ -190,14 +228,15 @@ def main(argv):
     model = network(FLAGS.arch).to(device)
 
     print(f'Model parameters: {list(model.parameters())}')  # Debug statement
+    print(f'Experiment number {FLAGS.expid} of {FLAGS.num_experiments}')
 
     optimizer = optim.SGD(model.parameters(), lr=FLAGS.lr, momentum=FLAGS.momentum, weight_decay=FLAGS.weight_decay)
     criterion = nn.CrossEntropyLoss()
 
-    train_loader, test_loader = get_data(seed)
+    train_loader, test_loader, xs, ys, keep, nclass = get_data(seed)
     train_loop = TrainLoop(model, optimizer, criterion, device)
 
-    logdir = os.path.join(FLAGS.logdir, 'run')
+    logdir = os.path.join(FLAGS.logdir, f'experiment_{FLAGS.expid}_of_{FLAGS.num_experiments}')
     if os.path.exists(logdir):
         shutil.rmtree(logdir)
     os.makedirs(logdir)
@@ -231,16 +270,25 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    flags.DEFINE_string('arch', 'cnn32-3-max', 'Model architecture.')
+    flags.DEFINE_string('arch', 'cnn32-3-mean', 'Model architecture.')
     flags.DEFINE_float('lr', 0.1, 'Learning rate.')
     flags.DEFINE_string('dataset', 'cifar10', 'Dataset.')
     flags.DEFINE_float('weight_decay', 0.0005, 'Weight decay ratio.')
     flags.DEFINE_float('momentum', 0.9, 'Momentum.')
     flags.DEFINE_integer('batch', 64, 'Batch size')
-    flags.DEFINE_integer('epochs', 50, 'Training duration in number of epochs.')
+    flags.DEFINE_integer('epochs', 5, 'Training duration in number of epochs.')
     flags.DEFINE_string('logdir', 'experiments', 'Directory where to save checkpoints and tensorboard data.')
     flags.DEFINE_integer('seed', None, 'Training seed.')
+    flags.DEFINE_float('pkeep', .5, 'Probability to keep examples.')
+    flags.DEFINE_integer('expid', None, 'Experiment ID')
+    flags.DEFINE_integer('num_experiments', None, 'Number of experiments')
     flags.DEFINE_string('augment', 'weak', 'Strong or weak augmentation')
-    flags.DEFINE_integer('save_steps', 10, 'How often to save the model.')
-    flags.DEFINE_integer('patience', None, 'Early stopping patience')
+    flags.DEFINE_integer('only_subset', None, 'Only train on a subset of images.')
+    flags.DEFINE_integer('dataset_size', 50000, 'number of examples to keep.')
+    flags.DEFINE_integer('eval_steps', 1, 'how often to get eval accuracy.')
+    flags.DEFINE_integer('abort_after_epoch', None, 'stop trainin early at an epoch')
+    flags.DEFINE_integer('save_steps', 10, 'how often to get save model.')
+    flags.DEFINE_integer('patience', None, 'Early stopping after this many epochs without progress')
+    flags.DEFINE_bool('tunename', False, 'Use tune name?')
+
     app.run(main)
