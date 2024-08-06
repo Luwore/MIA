@@ -36,24 +36,25 @@ def main(argv):
 
     def get_logits(model, xbatch, shift, reflect=True, stride=1):
         outs = []
-        aug_batch = torch.tensor(xbatch).to(device)  # .permute(0, 2, 3, 1)
+        xbatch = torch.tensor(xbatch).to(device)
 
-        if reflect:
-            aug_batch = torch.cat([aug_batch, aug_batch.flip(dims=[3])], dim=0)
+        for aug in [xbatch, xbatch.flip(dims=[2])][:reflect + 1]:  # Reflect augmentation
+            aug_pad = F.pad(aug, pad=[shift, shift, shift, shift], mode='reflect')  # Apply reflection padding
 
-        padding = [shift] * 4
-        aug_batch = F.pad(aug_batch, padding, mode='reflect')
-        #aug_batch = aug_batch.permute(0, 3, 1, 2)  # Convert to [batch_size, channels, height, width]
+            for dx in range(0, 2 * shift + 1, stride):
+                for dy in range(0, 2 * shift + 1, stride):
+                    this_x = aug_pad[:, :, dx:dx + 32, dy:dy + 32]
 
-        for dx in range(0, 2 * shift + 1, stride):
-            for dy in range(0, 2 * shift + 1, stride):
-                this_x = aug_batch[:, :, dx:dx + 32, dy:dy + 32]
-                logits = model(this_x)
-                outs.append(logits.cpu().numpy())
+                    logits = model(this_x)
+                    outs.append(logits.cpu().detach().numpy())  # Move logits to CPU and convert to Numpy array
 
+        print(np.array(outs).shape)
         return np.array(outs).transpose((1, 0, 2))
 
     N = 5000
+
+    def features(model, xbatch):
+        return get_logits(model, xbatch, shift=0, reflect=True, stride=1)
 
     for path in sorted(os.listdir(FLAGS.logdir)):
         if re.search(FLAGS.regex, path) is None:
@@ -92,13 +93,13 @@ def main(argv):
             model.eval()
 
             stats = []
-            with torch.no_grad():
-                for i in range(0, len(xs_all), N):
-                    xbatch = xs_all[i:i + N]
-                    logits = get_logits(model, xbatch, shift=0, reflect=True, stride=1)
-                    stats.append(logits)
 
-            np.save(logits_path, np.concatenate(stats, axis=0))
+            for i in range(0, len(xs_all), N):
+                stats.extend(features(model, xs_all[i:i + N]))
+                torch.cuda.empty_cache()
+
+            np.save(os.path.join(FLAGS.logdir, path, "logits", "%010d" % epoch),
+                    np.array(stats)[:, None, :, :])
 
 
 if __name__ == '__main__':
