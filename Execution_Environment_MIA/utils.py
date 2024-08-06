@@ -94,10 +94,10 @@ def test(model, test_loader, device):
 
 
 def load_attack_data():
-    train_file = './model/attack_train_data.npz'
-    test_file = './model/attack_test_data.npz'
-    test_classes = np.load('./model/attack_test_classes.npz')
-    train_classes = np.load('./model/attack_train_classes.npz')
+    train_file = MODEL_PATH + '/attack_train_data.npz'
+    test_file = MODEL_PATH + '/attack_test_data.npz'
+    test_classes = np.load(MODEL_PATH + '/attack_test_classes.npz')
+    train_classes = np.load(MODEL_PATH + '/attack_train_classes.npz')
 
     with np.load(train_file) as f:
         train_x, train_y = [f['arr_%d' % i] for i in range(len(f.files))]

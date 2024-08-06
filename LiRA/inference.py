@@ -5,12 +5,11 @@ import re
 import numpy as np
 import torch
 import torch.nn.functional as F
-from absl import app, flags
-from torchvision import transforms
+from absl import app
 
-from train import network, SimpleCNN, WideResNet  # Assuming these are defined in train.py
+from train import SimpleCNN, WideResNet  # Assuming these are defined in train.py
+from config import FLAGS
 
-FLAGS = flags.FLAGS
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -37,13 +36,14 @@ def main(argv):
 
     def get_logits(model, xbatch, shift, reflect=True, stride=1):
         outs = []
-        aug_batch = torch.tensor(xbatch).permute(0, 3, 1, 2).to(device)
+        aug_batch = torch.tensor(xbatch).to(device)  # .permute(0, 2, 3, 1)
 
         if reflect:
             aug_batch = torch.cat([aug_batch, aug_batch.flip(dims=[3])], dim=0)
 
         padding = [shift] * 4
         aug_batch = F.pad(aug_batch, padding, mode='reflect')
+        #aug_batch = aug_batch.permute(0, 3, 1, 2)  # Convert to [batch_size, channels, height, width]
 
         for dx in range(0, 2 * shift + 1, stride):
             for dy in range(0, 2 * shift + 1, stride):
@@ -102,9 +102,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    flags.DEFINE_string('dataset', 'cifar10', 'Dataset.')
-    flags.DEFINE_string('logdir', 'experiments/', 'Directory where to save checkpoints and tensorboard data.')
-    flags.DEFINE_string('regex', '.*experiment.*', 'keep files when matching')
-    flags.DEFINE_integer('dataset_size', 50000, 'size of dataset.')
-    flags.DEFINE_integer('from_epoch', None, 'which epoch to load from.')
     app.run(main)
